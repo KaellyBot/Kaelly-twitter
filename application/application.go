@@ -6,16 +6,16 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func New(twitterToken, rabbitMqClientId, rabbitMqAddress string, twitterTimeout int) (*Application, error) {
+func New(twitterToken, rabbitMqClientId, rabbitMqAddress string, tweetCount, twitterTimeout int) (*Application, error) {
 	broker, err := amqp.New(rabbitMqClientId, rabbitMqAddress, []amqp.Binding{})
 	if err != nil {
-		log.Error().Err(err).Msgf("Failed to instanciate broker")
+		log.Error().Err(err).Msgf("Failed to instantiate broker")
 		return nil, ErrCannotInstanciateApp
 	}
 
-	twitter, err := twitter.New(twitterToken, twitterTimeout, broker)
+	twitter, err := twitter.New(twitterToken, tweetCount, twitterTimeout, broker)
 	if err != nil {
-		log.Error().Err(err).Msgf("Twitter service instanciation failed")
+		log.Error().Err(err).Msgf("Twitter service instantiation failed")
 		return nil, err
 	}
 
@@ -26,7 +26,10 @@ func New(twitterToken, rabbitMqClientId, rabbitMqAddress string, twitterTimeout 
 }
 
 func (app *Application) Run() {
-	app.twitter.CheckTweets()
+	err := app.twitter.CheckTweets()
+	if err != nil {
+		log.Error().Err(err).Msgf("Failed to check tweets")
+	}
 }
 
 func (app *Application) Shutdown() {

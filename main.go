@@ -11,9 +11,10 @@ import (
 )
 
 var (
-	twitterTimeout  int
-	rabbitMqAddress string
-	token           string
+	twitterTweetCount int
+	twitterTimeout    int
+	rabbitMqAddress   string
+	twitterToken      string
 )
 
 func init() {
@@ -30,14 +31,16 @@ func init() {
 	}
 	log.Logger = log.With().Caller().Logger()
 
-	flag.IntVar(&twitterTimeout, "rssTimeout", models.TwitterTimeout, "Timeout to retrieve tweets in seconds")
+	flag.IntVar(&twitterTweetCount, "tweetCount", models.TwitterTimeout, "Tweet count retrieved for each account")
+	flag.IntVar(&twitterTimeout, "twitterTimeout", models.TwitterTimeout, "Timeout to retrieve tweets in seconds")
 	flag.StringVar(&rabbitMqAddress, "rabbitMqAddress", models.RabbitMqAddress, "RabbitMQ address")
-	flag.StringVar(&token, "token", "", "Twitter Bot Token")
+	flag.StringVar(&twitterToken, "twitterToken", models.TwitterBearerToken, "Twitter Bearer Token")
 	flag.Parse()
 }
 
 func main() {
-	app, err := application.New(token, models.RabbitMqClientId, rabbitMqAddress, twitterTimeout)
+	app, err := application.New(twitterToken, models.RabbitMqClientId, rabbitMqAddress,
+		twitterTweetCount, twitterTimeout)
 	if err != nil {
 		log.Fatal().Err(err).Msgf("Shutting down after failing to instanciate application")
 	}
