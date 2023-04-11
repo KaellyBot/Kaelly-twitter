@@ -2,34 +2,43 @@ package application
 
 import (
 	amqp "github.com/kaellybot/kaelly-amqp"
+	"github.com/kaellybot/kaelly-twitter/models/constants"
+	"github.com/kaellybot/kaelly-twitter/repositories/twitteraccounts"
 	"github.com/kaellybot/kaelly-twitter/services/twitter"
+	"github.com/kaellybot/kaelly-twitter/utils/databases"
 	"github.com/rs/zerolog/log"
+	"github.com/spf13/viper"
 )
 
-func New(twitterToken, rabbitMqClientId, rabbitMqAddress string, tweetCount, twitterTimeout int) (*Application, error) {
-	broker, err := amqp.New(rabbitMqClientId, rabbitMqAddress, []amqp.Binding{})
+func New() (*Application, error) {
+	// misc
+	db, err := databases.New()
 	if err != nil {
-		log.Error().Err(err).Msgf("Failed to instantiate broker")
-		return nil, ErrCannotInstanciateApp
+		return nil, err
 	}
 
-	twitter, err := twitter.New(twitterToken, tweetCount, twitterTimeout, broker)
+	broker, err := amqp.New(constants.RabbitMQClientId, viper.GetString(constants.RabbitMqAddress), nil)
 	if err != nil {
-		log.Error().Err(err).Msgf("Twitter service instantiation failed")
+		return nil, err
+	}
+
+	// repositories
+	twitterRepo := twitteraccounts.New(db)
+
+	// services
+	twitterService, err := twitter.New(twitterRepo, broker)
+	if err != nil {
 		return nil, err
 	}
 
 	return &Application{
-		twitter: twitter,
-		broker:  broker,
+		twitterService: twitterService,
+		broker:         broker,
 	}, nil
 }
 
-func (app *Application) Run() {
-	err := app.twitter.CheckTweets()
-	if err != nil {
-		log.Error().Err(err).Msgf("Failed to check tweets")
-	}
+func (app *Application) Run() error {
+	return app.twitterService.CheckTweets()
 }
 
 func (app *Application) Shutdown() {

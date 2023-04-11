@@ -7,37 +7,47 @@ import (
 	"time"
 
 	amqp "github.com/kaellybot/kaelly-amqp"
-	"github.com/kaellybot/kaelly-twitter/models"
+	"github.com/kaellybot/kaelly-twitter/models/constants"
+	"github.com/kaellybot/kaelly-twitter/repositories/twitteraccounts"
 	"github.com/rs/zerolog/log"
+	"github.com/spf13/viper"
 	"github.com/tidwall/gjson"
 )
 
-func New(token string, tweetCount, timeout int, broker *amqp.MessageBroker) (*TwitterService, error) {
-	return &TwitterService{
-		tweetCount: tweetCount,
-		token:      token,
-		broker:     broker,
+func New(twitterAccountsRepo twitteraccounts.TwitterAccountRepository,
+	broker *amqp.MessageBroker) (*TwitterServiceImpl, error) {
+
+	return &TwitterServiceImpl{
+		tweetCount:          viper.GetInt(constants.TwitterTweetCount),
+		token:               viper.GetString(constants.TwitterBearerToken),
+		twitterAccountsRepo: twitterAccountsRepo,
+		broker:              broker,
 		client: http.Client{
-			Timeout: time.Duration(timeout) * time.Second,
+			Timeout: time.Duration(viper.GetInt(constants.TwitterTimeout)) * time.Second,
 		},
 	}, nil
 }
 
-func (service *TwitterService) CheckTweets() error {
+func (service *TwitterServiceImpl) CheckTweets() error {
 	log.Info().Msgf("Retrieving tweets from Twitter...")
 
-	responses := make(map[amqp.Language][]models.Tweet, 0)
+	twitterAccounts, err := service.twitterAccountsRepo.GetTwitterAccounts()
+	if err != nil {
+		return err
+	}
+
+	responses := make(map[amqp.Language][]Tweet, 0)
 	guestToken, err := service.getGuestToken()
 	if err != nil {
 		return err
 	}
 
-	for lg, userID := range models.TwitterIDs {
-		tweets, err := service.getUserTweets(service.token, guestToken, userID)
+	for _, account := range twitterAccounts {
+		tweets, err := service.getUserTweets(service.token, guestToken, account.Id)
 		if err != nil {
 			return err
 		}
-		responses[lg] = tweets
+		responses[account.Language] = tweets
 	}
 
 	// TODO
@@ -46,7 +56,7 @@ func (service *TwitterService) CheckTweets() error {
 	return nil
 }
 
-func (service *TwitterService) getGuestToken() (string, error) {
+func (service *TwitterServiceImpl) getGuestToken() (string, error) {
 	req, err := http.NewRequest("HEAD", twitterURL, nil)
 	if err != nil {
 		return "", err
@@ -71,7 +81,7 @@ func (service *TwitterService) getGuestToken() (string, error) {
 	return "", errCookieNotFound
 }
 
-func (service *TwitterService) getUserTweets(bearerToken, guestToken, userId string) ([]models.Tweet, error) {
+func (service *TwitterServiceImpl) getUserTweets(bearerToken, guestToken, userId string) ([]Tweet, error) {
 	req, err := http.NewRequest("GET", twitterAPIURL, nil)
 	if err != nil {
 		return nil, err
@@ -98,7 +108,7 @@ func (service *TwitterService) getUserTweets(bearerToken, guestToken, userId str
 	}
 }
 
-func castResponse(userId string, entity *http.Response) ([]models.Tweet, error) {
+func castResponse(userId string, entity *http.Response) ([]Tweet, error) {
 	body, err := ioutil.ReadAll(entity.Body)
 	if err != nil {
 		return nil, fmt.Errorf("cannot read response body: %w", err)
@@ -107,7 +117,7 @@ func castResponse(userId string, entity *http.Response) ([]models.Tweet, error) 
 	rootNode := gjson.ParseBytes(body)
 	dataNode := rootNode.Get("data.user.result.timeline.timeline.instructions.#(type==\"TimelineAddEntries\").entries.#.content.itemContent.tweet_results.result")
 
-	var tweets []models.Tweet
+	var tweets []Tweet
 	for _, tweetData := range dataNode.Array() {
 		if !isEntryOriginalTweet(tweetData) {
 			continue
@@ -120,7 +130,7 @@ func castResponse(userId string, entity *http.Response) ([]models.Tweet, error) 
 			return nil, fmt.Errorf("cannot parse tweet created_at: %w", err)
 		}
 
-		tweets = append(tweets, models.Tweet{
+		tweets = append(tweets, Tweet{
 			URL:       fmt.Sprintf("%s/%s/status/%s", twitterURL, userId, restId),
 			CreatedAt: createdAt,
 		})

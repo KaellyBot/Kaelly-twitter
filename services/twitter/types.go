@@ -3,8 +3,10 @@ package twitter
 import (
 	"errors"
 	"net/http"
+	"time"
 
 	amqp "github.com/kaellybot/kaelly-amqp"
+	"github.com/kaellybot/kaelly-twitter/repositories/twitteraccounts"
 )
 
 const (
@@ -21,13 +23,19 @@ var (
 	errCookieNotFound = errors.New("Cookie cannot be found")
 )
 
-type TwitterServiceInterface interface {
+type TwitterService interface {
 	CheckTweets() error
 }
 
-type TwitterService struct {
-	tweetCount int
-	token      string
-	broker     amqp.MessageBrokerInterface
-	client     http.Client
+type TwitterServiceImpl struct {
+	tweetCount          int
+	token               string
+	broker              amqp.MessageBrokerInterface
+	client              http.Client
+	twitterAccountsRepo twitteraccounts.TwitterAccountRepository
+}
+
+type Tweet struct {
+	URL       string
+	CreatedAt time.Time
 }
