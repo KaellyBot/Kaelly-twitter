@@ -38,7 +38,7 @@ func New() (*Application, error) {
 }
 
 func (app *Application) Run() error {
-	return app.twitterService.CheckTweets()
+	return app.twitterService.DispatchNewTweets()
 }
 
 func (app *Application) Shutdown() {

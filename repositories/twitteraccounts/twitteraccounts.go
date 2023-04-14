@@ -14,3 +14,7 @@ func (repo *TwitterAccountRepositoryImpl) GetTwitterAccounts() ([]entities.Twitt
 	response := repo.db.GetDB().Model(&entities.TwitterAccount{}).Find(&twitterAccounts)
 	return twitterAccounts, response.Error
 }
+
+func (repo *TwitterAccountRepositoryImpl) Save(twitterAccount entities.TwitterAccount) error {
+	return repo.db.GetDB().Save(&twitterAccount).Error
+}

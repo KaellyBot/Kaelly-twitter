@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"sort"
 	"time"
 
 	amqp "github.com/kaellybot/kaelly-amqp"
@@ -12,6 +13,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 	"github.com/tidwall/gjson"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func New(twitterAccountsRepo twitteraccounts.TwitterAccountRepository,
@@ -28,7 +30,7 @@ func New(twitterAccountsRepo twitteraccounts.TwitterAccountRepository,
 	}, nil
 }
 
-func (service *TwitterServiceImpl) CheckTweets() error {
+func (service *TwitterServiceImpl) DispatchNewTweets() error {
 	log.Info().Msgf("Retrieving tweets from Twitter...")
 
 	twitterAccounts, err := service.twitterAccountsRepo.GetTwitterAccounts()
@@ -36,7 +38,6 @@ func (service *TwitterServiceImpl) CheckTweets() error {
 		return err
 	}
 
-	responses := make(map[amqp.Language][]Tweet, 0)
 	guestToken, err := service.getGuestToken()
 	if err != nil {
 		return err
@@ -45,15 +46,56 @@ func (service *TwitterServiceImpl) CheckTweets() error {
 	for _, account := range twitterAccounts {
 		tweets, err := service.getUserTweets(service.token, guestToken, account.Id)
 		if err != nil {
-			return err
+			log.Error().Err(err).
+				Str(constants.LogTwitterId, account.Id).
+				Msgf("Cannot retrieve tweet from the twitter account")
+			break
 		}
-		responses[account.Language] = tweets
+
+		lastUpdate := account.LastUpdate
+		for _, tweet := range tweets {
+			if tweet.CreatedAt.After(lastUpdate) {
+				log.Info().
+					Str(constants.LogCorrelationId, tweet.Id).
+					Str(constants.LogTwitterId, account.Id).
+					Msgf("New tweet to publish!")
+
+				err := service.publishTweet(tweet, account.Language)
+				if err != nil {
+					log.Error().Err(err).
+						Str(constants.LogCorrelationId, tweet.Id).
+						Str(constants.LogTwitterId, account.Id).
+						Msgf("Cannot publish via broker, next account tweets are ignored")
+					break
+				}
+
+				account.LastUpdate = tweet.CreatedAt
+				err = service.twitterAccountsRepo.Save(account)
+				if err != nil {
+					log.Error().Err(err).
+						Str(constants.LogCorrelationId, tweet.Id).
+						Str(constants.LogTwitterId, account.Id).
+						Msgf("Cannot update account, its next tweets are ignored. Some tweets might be published again next time")
+					break
+				}
+			}
+		}
 	}
 
-	// TODO
-	log.Info().Msgf("Tweets: %v", responses)
-
 	return nil
+}
+
+func (service *TwitterServiceImpl) publishTweet(tweet Tweet, lg amqp.Language) error {
+	message := amqp.RabbitMQMessage{
+		Type:     amqp.RabbitMQMessage_NEWS_TWITTER,
+		Language: lg,
+		NewsTwitterMessage: &amqp.NewsTwitterMessage{
+			Url:  tweet.Url,
+			Date: timestamppb.New(tweet.CreatedAt),
+		},
+	}
+
+	return service.broker.Publish(&message, amqp.ExchangeNews, routingkey, tweet.Id)
 }
 
 func (service *TwitterServiceImpl) getGuestToken() (string, error) {
@@ -131,10 +173,15 @@ func castResponse(userId string, entity *http.Response) ([]Tweet, error) {
 		}
 
 		tweets = append(tweets, Tweet{
-			URL:       fmt.Sprintf("%s/%s/status/%s", twitterURL, userId, restId),
+			Id:        restId,
+			Url:       fmt.Sprintf("%s/%s/status/%s", twitterURL, userId, restId),
 			CreatedAt: createdAt,
 		})
 	}
+
+	sort.SliceStable(tweets, func(i, j int) bool {
+		return tweets[i].CreatedAt.Before(tweets[j].CreatedAt)
+	})
 
 	return tweets, nil
 }

@@ -7,6 +7,7 @@ import (
 
 type TwitterAccountRepository interface {
 	GetTwitterAccounts() ([]entities.TwitterAccount, error)
+	Save(twitterAccount entities.TwitterAccount) error
 }
 
 type TwitterAccountRepositoryImpl struct {

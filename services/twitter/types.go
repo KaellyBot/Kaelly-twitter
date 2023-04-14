@@ -17,6 +17,7 @@ const (
 	variablesParameter    = "variables"
 	featuresParameter     = "features"
 	twitterEntryTypeTweet = "Tweet"
+	routingkey            = "news.twitter"
 )
 
 var (
@@ -24,7 +25,7 @@ var (
 )
 
 type TwitterService interface {
-	CheckTweets() error
+	DispatchNewTweets() error
 }
 
 type TwitterServiceImpl struct {
@@ -36,6 +37,7 @@ type TwitterServiceImpl struct {
 }
 
 type Tweet struct {
-	URL       string
+	Id        string
+	Url       string
 	CreatedAt time.Time
 }
