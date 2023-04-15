@@ -5,10 +5,12 @@ import (
 	"io/ioutil"
 	"net/http"
 	"sort"
+	"sync"
 	"time"
 
 	amqp "github.com/kaellybot/kaelly-amqp"
 	"github.com/kaellybot/kaelly-twitter/models/constants"
+	"github.com/kaellybot/kaelly-twitter/models/entities"
 	"github.com/kaellybot/kaelly-twitter/repositories/twitteraccounts"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
@@ -43,46 +45,68 @@ func (service *TwitterServiceImpl) DispatchNewTweets() error {
 		return err
 	}
 
+	var wg sync.WaitGroup
 	for _, account := range twitterAccounts {
-		tweets, err := service.getUserTweets(service.token, guestToken, account.Id)
-		if err != nil {
-			log.Error().Err(err).
-				Str(constants.LogTwitterId, account.Id).
-				Msgf("Cannot retrieve tweet from the twitter account")
-			break
-		}
+		wg.Add(1)
+		go func(twitterAccount entities.TwitterAccount) {
+			defer wg.Done()
+			service.checkTwitterAccount(twitterAccount, guestToken)
+		}(account)
+	}
 
-		lastUpdate := account.LastUpdate
-		for _, tweet := range tweets {
-			if tweet.CreatedAt.After(lastUpdate) {
-				log.Info().
+	wg.Wait()
+	return nil
+}
+
+func (service *TwitterServiceImpl) checkTwitterAccount(account entities.TwitterAccount, guestToken string) {
+	log.Info().
+		Str(constants.LogLanguage, account.Language.String()).
+		Str(constants.LogTwitterId, account.Id).
+		Msgf("Reading tweets...")
+
+	tweets, err := service.getUserTweets(service.token, guestToken, account.Id)
+	if err != nil {
+		log.Error().Err(err).
+			Str(constants.LogTwitterId, account.Id).
+			Msgf("Cannot retrieve tweet from the twitter account, ignored")
+		return
+	}
+
+	publishedTweets := 0
+	lastUpdate := account.LastUpdate
+	for _, tweet := range tweets {
+		if tweet.CreatedAt.UTC().After(lastUpdate.UTC()) {
+
+			err := service.publishTweet(tweet, account.Language)
+			if err != nil {
+				log.Error().Err(err).
 					Str(constants.LogCorrelationId, tweet.Id).
 					Str(constants.LogTwitterId, account.Id).
-					Msgf("New tweet to publish!")
-
-				err := service.publishTweet(tweet, account.Language)
-				if err != nil {
-					log.Error().Err(err).
-						Str(constants.LogCorrelationId, tweet.Id).
-						Str(constants.LogTwitterId, account.Id).
-						Msgf("Cannot publish via broker, next account tweets are ignored")
-					break
-				}
-
-				account.LastUpdate = tweet.CreatedAt
-				err = service.twitterAccountsRepo.Save(account)
-				if err != nil {
-					log.Error().Err(err).
-						Str(constants.LogCorrelationId, tweet.Id).
-						Str(constants.LogTwitterId, account.Id).
-						Msgf("Cannot update account, its next tweets are ignored. Some tweets might be published again next time")
-					break
-				}
+					Str(constants.LogTweetId, tweet.Id).
+					Msgf("Impossible to publish tweet, breaking loop")
+				break
 			}
+
+			account.LastUpdate = tweet.CreatedAt
+			err = service.twitterAccountsRepo.Save(account)
+			if err != nil {
+				log.Error().Err(err).
+					Str(constants.LogCorrelationId, tweet.Id).
+					Str(constants.LogTwitterId, account.Id).
+					Str(constants.LogTweetId, tweet.Id).
+					Msgf("Impossible to update account, breaking loop; this tweet might be published again next time")
+				break
+			}
+
+			publishedTweets++
 		}
 	}
 
-	return nil
+	log.Info().
+		Str(constants.LogLanguage, account.Language.String()).
+		Str(constants.LogTwitterId, account.Id).
+		Int(constants.LogTweetNumber, publishedTweets).
+		Msgf("Tweet(s) read and published")
 }
 
 func (service *TwitterServiceImpl) publishTweet(tweet Tweet, lg amqp.Language) error {
