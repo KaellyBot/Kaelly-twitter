@@ -87,7 +87,7 @@ func (service *TwitterServiceImpl) checkTwitterAccount(account entities.TwitterA
 				break
 			}
 
-			account.LastUpdate = tweet.CreatedAt
+			account.LastUpdate = tweet.CreatedAt.UTC()
 			err = service.twitterAccountsRepo.Save(account)
 			if err != nil {
 				log.Error().Err(err).
