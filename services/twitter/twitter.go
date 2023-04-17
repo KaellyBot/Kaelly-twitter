@@ -60,7 +60,7 @@ func (service *TwitterServiceImpl) DispatchNewTweets() error {
 
 func (service *TwitterServiceImpl) checkTwitterAccount(account entities.TwitterAccount, guestToken string) {
 	log.Info().
-		Str(constants.LogLanguage, account.Language.String()).
+		Str(constants.LogLanguage, account.Locale.String()).
 		Str(constants.LogTwitterId, account.Id).
 		Msgf("Reading tweets...")
 
@@ -77,7 +77,7 @@ func (service *TwitterServiceImpl) checkTwitterAccount(account entities.TwitterA
 	for _, tweet := range tweets {
 		if tweet.CreatedAt.UTC().After(lastUpdate.UTC()) {
 
-			err := service.publishTweet(tweet, account.Language)
+			err := service.publishTweet(tweet, account.Locale)
 			if err != nil {
 				log.Error().Err(err).
 					Str(constants.LogCorrelationId, tweet.Id).
@@ -103,7 +103,7 @@ func (service *TwitterServiceImpl) checkTwitterAccount(account entities.TwitterA
 	}
 
 	log.Info().
-		Str(constants.LogLanguage, account.Language.String()).
+		Str(constants.LogLanguage, account.Locale.String()).
 		Str(constants.LogTwitterId, account.Id).
 		Int(constants.LogTweetNumber, publishedTweets).
 		Msgf("Tweet(s) read and published")
