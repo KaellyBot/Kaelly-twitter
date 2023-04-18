@@ -29,6 +29,9 @@ const (
 	// Timeout to retrieve tweets in seconds
 	TwitterTimeout = "HTTP_TIMEOUT"
 
+	// Metric port
+	MetricPort = "METRIC_PORT"
+
 	// Zerolog values from [trace, debug, info, warn, error, fatal, panic]
 	LogLevel = "LOG_LEVEL"
 
@@ -46,6 +49,7 @@ var (
 		TwitterBearerToken: "",
 		TwitterTweetCount:  20,
 		TwitterTimeout:     60,
+		MetricPort:         2112,
 		LogLevel:           zerolog.InfoLevel.String(),
 		Production:         false,
 	}
