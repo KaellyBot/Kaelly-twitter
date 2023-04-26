@@ -123,7 +123,7 @@ func (service *TwitterServiceImpl) publishTweet(tweet Tweet, lg amqp.Language) e
 }
 
 func (service *TwitterServiceImpl) getGuestToken() (string, error) {
-	req, err := http.NewRequest("HEAD", twitterURL, nil)
+	req, err := http.NewRequest("GET", twitterURL, nil)
 	if err != nil {
 		return "", err
 	}
