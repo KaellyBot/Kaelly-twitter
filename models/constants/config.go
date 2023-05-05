@@ -1,5 +1,7 @@
 package constants
 
+import "github.com/rs/zerolog"
+
 const (
 	ConfigFileName = ".env"
 
@@ -36,32 +38,31 @@ const (
 	// Boolean; used to register commands at development guild level or globally.
 	Production = "PRODUCTION"
 
-	// Default values.
-	defaultMySQLURLValue           = "localhost:3306"
-	defaultMySQLUserValue          = ""
-	defaultMySQLPasswordValue      = ""
-	defaultMySQLDatabaseValue      = "kaellybot"
-	defaultRabbitMQAddressValue    = "amqp://localhost:5672"
-	defaultTwitterBearerTokenValue = ""
-	defaultTwitterTweetCountValue  = 20
-	defaultTwitterTimeoutValue     = 60
-	defaultMetricPortValue         = 2112
-	defaultLogLevelValue           = "info"
-	defaultProductionValue         = false
+	defaultMySQLURL           = "localhost:3306"
+	defaultMySQLUser          = ""
+	defaultMySQLPassword      = ""
+	defaultMySQLDatabase      = "kaellybot"
+	defaultRabbitMQAddress    = "amqp://localhost:5672"
+	defaultTwitterBearerToken = ""
+	defaultTwitterTweetCount  = 20
+	defaultTwitterTimeout     = 60
+	defaultMetricPort         = 2112
+	defaultLogLevel           = zerolog.InfoLevel
+	defaultProduction         = false
 )
 
 func GetDefaultConfigValues() map[string]any {
 	return map[string]any{
-		MySQLURL:           defaultMySQLURLValue,
-		MySQLUser:          defaultMySQLUserValue,
-		MySQLPassword:      defaultMySQLPasswordValue,
-		MySQLDatabase:      defaultMySQLDatabaseValue,
-		RabbitMQAddress:    defaultRabbitMQAddressValue,
-		TwitterBearerToken: defaultTwitterBearerTokenValue,
-		TwitterTweetCount:  defaultTwitterTweetCountValue,
-		TwitterTimeout:     defaultTwitterTimeoutValue,
-		MetricPort:         defaultMetricPortValue,
-		LogLevel:           defaultLogLevelValue,
-		Production:         defaultProductionValue,
+		MySQLURL:           defaultMySQLURL,
+		MySQLUser:          defaultMySQLUser,
+		MySQLPassword:      defaultMySQLPassword,
+		MySQLDatabase:      defaultMySQLDatabase,
+		RabbitMQAddress:    defaultRabbitMQAddress,
+		TwitterBearerToken: defaultTwitterBearerToken,
+		TwitterTweetCount:  defaultTwitterTweetCount,
+		TwitterTimeout:     defaultTwitterTimeout,
+		MetricPort:         defaultMetricPort,
+		LogLevel:           defaultLogLevel.String(),
+		Production:         defaultProduction,
 	}
 }
