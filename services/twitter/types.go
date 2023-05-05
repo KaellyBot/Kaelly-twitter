@@ -31,7 +31,7 @@ type Service interface {
 type Impl struct {
 	tweetCount          int
 	token               string
-	broker              amqp.MessageBrokerInterface
+	broker              amqp.MessageBroker
 	client              http.Client
 	twitterAccountsRepo twitteraccounts.Repository
 }

@@ -19,7 +19,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func New(twitterAccountsRepo twitteraccounts.Repository, broker *amqp.MessageBroker) (*Impl, error) {
+func New(twitterAccountsRepo twitteraccounts.Repository, broker amqp.MessageBroker) (*Impl, error) {
 	return &Impl{
 		tweetCount:          viper.GetInt(constants.TwitterTweetCount),
 		token:               viper.GetString(constants.TwitterBearerToken),

@@ -12,5 +12,5 @@ type Application interface {
 
 type Impl struct {
 	twitterService twitter.Service
-	broker         amqp.MessageBrokerInterface
+	broker         amqp.MessageBroker
 }
