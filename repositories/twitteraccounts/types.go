@@ -5,11 +5,11 @@ import (
 	"github.com/kaellybot/kaelly-twitter/utils/databases"
 )
 
-type TwitterAccountRepository interface {
+type Repository interface {
 	GetTwitterAccounts() ([]entities.TwitterAccount, error)
 	Save(twitterAccount entities.TwitterAccount) error
 }
 
-type TwitterAccountRepositoryImpl struct {
+type Impl struct {
 	db databases.MySQLConnection
 }

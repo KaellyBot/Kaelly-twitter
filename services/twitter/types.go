@@ -21,23 +21,23 @@ const (
 )
 
 var (
-	errCookieNotFound = errors.New("Cookie cannot be found")
+	errCookieNotFound = errors.New("cookie cannot be found")
 )
 
-type TwitterService interface {
+type Service interface {
 	DispatchNewTweets() error
 }
 
-type TwitterServiceImpl struct {
+type Impl struct {
 	tweetCount          int
 	token               string
 	broker              amqp.MessageBrokerInterface
 	client              http.Client
-	twitterAccountsRepo twitteraccounts.TwitterAccountRepository
+	twitterAccountsRepo twitteraccounts.Repository
 }
 
 type Tweet struct {
-	Id        string
-	Url       string
+	ID        string
+	URL       string
 	CreatedAt time.Time
 }

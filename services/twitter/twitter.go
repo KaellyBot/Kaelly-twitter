@@ -1,8 +1,9 @@
 package twitter
 
 import (
+	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"sort"
 	"sync"
@@ -18,10 +19,8 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func New(twitterAccountsRepo twitteraccounts.TwitterAccountRepository,
-	broker *amqp.MessageBroker) (*TwitterServiceImpl, error) {
-
-	return &TwitterServiceImpl{
+func New(twitterAccountsRepo twitteraccounts.Repository, broker *amqp.MessageBroker) (*Impl, error) {
+	return &Impl{
 		tweetCount:          viper.GetInt(constants.TwitterTweetCount),
 		token:               viper.GetString(constants.TwitterBearerToken),
 		twitterAccountsRepo: twitterAccountsRepo,
@@ -32,7 +31,7 @@ func New(twitterAccountsRepo twitteraccounts.TwitterAccountRepository,
 	}, nil
 }
 
-func (service *TwitterServiceImpl) DispatchNewTweets() error {
+func (service *Impl) DispatchNewTweets() error {
 	log.Info().Msgf("Retrieving tweets from Twitter...")
 
 	twitterAccounts, err := service.twitterAccountsRepo.GetTwitterAccounts()
@@ -58,16 +57,16 @@ func (service *TwitterServiceImpl) DispatchNewTweets() error {
 	return nil
 }
 
-func (service *TwitterServiceImpl) checkTwitterAccount(account entities.TwitterAccount, guestToken string) {
+func (service *Impl) checkTwitterAccount(account entities.TwitterAccount, guestToken string) {
 	log.Info().
 		Str(constants.LogLanguage, account.Locale.String()).
-		Str(constants.LogTwitterId, account.Id).
+		Str(constants.LogTwitterID, account.ID).
 		Msgf("Reading tweets...")
 
-	tweets, err := service.getUserTweets(service.token, guestToken, account.Id)
+	tweets, err := service.getUserTweets(service.token, guestToken, account.ID)
 	if err != nil {
 		log.Error().Err(err).
-			Str(constants.LogTwitterId, account.Id).
+			Str(constants.LogTwitterID, account.ID).
 			Msgf("Cannot retrieve tweet from the twitter account, ignored")
 		return
 	}
@@ -76,13 +75,12 @@ func (service *TwitterServiceImpl) checkTwitterAccount(account entities.TwitterA
 	lastUpdate := account.LastUpdate
 	for _, tweet := range tweets {
 		if tweet.CreatedAt.UTC().After(lastUpdate.UTC()) {
-
-			err := service.publishTweet(tweet, account.Locale)
-			if err != nil {
+			errPublish := service.publishTweet(tweet, account.Locale)
+			if errPublish != nil {
 				log.Error().Err(err).
-					Str(constants.LogCorrelationId, tweet.Id).
-					Str(constants.LogTwitterId, account.Id).
-					Str(constants.LogTweetId, tweet.Id).
+					Str(constants.LogCorrelationID, tweet.ID).
+					Str(constants.LogTwitterID, account.ID).
+					Str(constants.LogTweetID, tweet.ID).
 					Msgf("Impossible to publish tweet, breaking loop")
 				break
 			}
@@ -91,9 +89,9 @@ func (service *TwitterServiceImpl) checkTwitterAccount(account entities.TwitterA
 			err = service.twitterAccountsRepo.Save(account)
 			if err != nil {
 				log.Error().Err(err).
-					Str(constants.LogCorrelationId, tweet.Id).
-					Str(constants.LogTwitterId, account.Id).
-					Str(constants.LogTweetId, tweet.Id).
+					Str(constants.LogCorrelationID, tweet.ID).
+					Str(constants.LogTwitterID, account.ID).
+					Str(constants.LogTweetID, tweet.ID).
 					Msgf("Impossible to update account, breaking loop; this tweet might be published again next time")
 				break
 			}
@@ -104,26 +102,29 @@ func (service *TwitterServiceImpl) checkTwitterAccount(account entities.TwitterA
 
 	log.Info().
 		Str(constants.LogLanguage, account.Locale.String()).
-		Str(constants.LogTwitterId, account.Id).
+		Str(constants.LogTwitterID, account.ID).
 		Int(constants.LogTweetNumber, publishedTweets).
 		Msgf("Tweet(s) read and published")
 }
 
-func (service *TwitterServiceImpl) publishTweet(tweet Tweet, lg amqp.Language) error {
+func (service *Impl) publishTweet(tweet Tweet, lg amqp.Language) error {
 	message := amqp.RabbitMQMessage{
 		Type:     amqp.RabbitMQMessage_NEWS_TWITTER,
 		Language: lg,
 		NewsTwitterMessage: &amqp.NewsTwitterMessage{
-			Url:  tweet.Url,
+			Url:  tweet.URL,
 			Date: timestamppb.New(tweet.CreatedAt),
 		},
 	}
 
-	return service.broker.Publish(&message, amqp.ExchangeNews, routingkey, tweet.Id)
+	return service.broker.Publish(&message, amqp.ExchangeNews, routingkey, tweet.ID)
 }
 
-func (service *TwitterServiceImpl) getGuestToken() (string, error) {
-	req, err := http.NewRequest("GET", twitterURL, nil)
+func (service *Impl) getGuestToken() (string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), service.client.Timeout)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, twitterURL, nil)
 	if err != nil {
 		return "", err
 	}
@@ -141,14 +142,17 @@ func (service *TwitterServiceImpl) getGuestToken() (string, error) {
 			}
 		}
 	} else {
-		return "", fmt.Errorf("Cannot consume twitter API, guest_token could not be retrieved: %d", res.StatusCode)
+		return "", fmt.Errorf("cannot consume twitter API, guest_token could not be retrieved: %d", res.StatusCode)
 	}
 
 	return "", errCookieNotFound
 }
 
-func (service *TwitterServiceImpl) getUserTweets(bearerToken, guestToken, userId string) ([]Tweet, error) {
-	req, err := http.NewRequest("GET", twitterAPIURL, nil)
+func (service *Impl) getUserTweets(bearerToken, guestToken, userID string) ([]Tweet, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), service.client.Timeout)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, twitterAPIURL, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +161,7 @@ func (service *TwitterServiceImpl) getUserTweets(bearerToken, guestToken, userId
 	req.Header.Set(headerGuestToken, guestToken)
 
 	q := req.URL.Query()
-	q.Add(variablesParameter, getVariables(userId, service.tweetCount))
+	q.Add(variablesParameter, getVariables(userID, service.tweetCount))
 	q.Add(featuresParameter, getFeatures())
 	req.URL.RawQuery = q.Encode()
 
@@ -168,20 +172,21 @@ func (service *TwitterServiceImpl) getUserTweets(bearerToken, guestToken, userId
 
 	defer resp.Body.Close()
 	if resp.StatusCode == http.StatusOK {
-		return castResponse(userId, resp)
-	} else {
-		return nil, fmt.Errorf("Cannot consume twitter API (userId=%s): %d", userId, resp.StatusCode)
+		return castResponse(userID, resp)
 	}
+
+	return nil, fmt.Errorf("cannot consume twitter API (userID=%s): %d", userID, resp.StatusCode)
 }
 
-func castResponse(userId string, entity *http.Response) ([]Tweet, error) {
-	body, err := ioutil.ReadAll(entity.Body)
+func castResponse(userID string, entity *http.Response) ([]Tweet, error) {
+	body, err := io.ReadAll(entity.Body)
 	if err != nil {
 		return nil, fmt.Errorf("cannot read response body: %w", err)
 	}
 
 	rootNode := gjson.ParseBytes(body)
-	dataNode := rootNode.Get("data.user.result.timeline.timeline.instructions.#(type==\"TimelineAddEntries\").entries.#.content.itemContent.tweet_results.result")
+	dataNode := rootNode.Get("data.user.result.timeline.timeline.instructions.#(type==\"TimelineAddEntries\")" +
+		".entries.#.content.itemContent.tweet_results.result")
 
 	var tweets []Tweet
 	for _, tweetData := range dataNode.Array() {
@@ -189,16 +194,16 @@ func castResponse(userId string, entity *http.Response) ([]Tweet, error) {
 			continue
 		}
 
-		restId := tweetData.Get("rest_id").String()
+		restID := tweetData.Get("rest_id").String()
 		createdAtStr := tweetData.Get("legacy.created_at").String()
-		createdAt, err := time.Parse(time.RubyDate, createdAtStr)
-		if err != nil {
+		createdAt, errParsing := time.Parse(time.RubyDate, createdAtStr)
+		if errParsing != nil {
 			return nil, fmt.Errorf("cannot parse tweet created_at: %w", err)
 		}
 
 		tweets = append(tweets, Tweet{
-			Id:        restId,
-			Url:       fmt.Sprintf("%s/%s/status/%s", twitterURL, userId, restId),
+			ID:        restID,
+			URL:       fmt.Sprintf("%s/%s/status/%s", twitterURL, userID, restID),
 			CreatedAt: createdAt,
 		})
 	}
@@ -210,15 +215,15 @@ func castResponse(userId string, entity *http.Response) ([]Tweet, error) {
 	return tweets, nil
 }
 
-func getVariables(userId string, tweetCount int) string {
-	return fmt.Sprintf(`{"userId":"%s",
+func getVariables(userID string, tweetCount int) string {
+	return fmt.Sprintf(`{"userID":"%s",
                 "count":%d,
                 "includePromotedContent":false,
                 "withVoice":false,
                 "withDownvotePerspective":false,
                 "withReactionsMetadata":false,
                 "withReactionsPerspective":false}`,
-		userId, tweetCount)
+		userID, tweetCount)
 }
 
 func getFeatures() string {

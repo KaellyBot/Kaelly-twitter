@@ -1,6 +1,6 @@
 module github.com/kaellybot/kaelly-twitter
 
-go 1.18
+go 1.20
 
 // replace github.com/kaellybot/kaelly-amqp => /home/kaysoro/git/kaelly-amqp
 

@@ -4,10 +4,10 @@ import "github.com/rs/zerolog"
 
 const (
 	LogFileName      = "fileName"
-	LogCorrelationId = "correlationId"
+	LogCorrelationID = "correlationID"
 	LogLanguage      = "language"
-	LogTwitterId     = "twitterId"
-	LogTweetId       = "tweetId"
+	LogTwitterID     = "twitterID"
+	LogTweetID       = "tweetID"
 	LogTweetNumber   = "tweetNumber"
 	LogLevelFallback = zerolog.InfoLevel
 )

@@ -21,7 +21,7 @@ func init() {
 func initConfig() {
 	viper.SetConfigFile(constants.ConfigFileName)
 
-	for configName, defaultValue := range constants.DefaultConfigValues {
+	for configName, defaultValue := range constants.GetDefaultConfigValues() {
 		viper.SetDefault(configName, defaultValue)
 	}
 
@@ -57,10 +57,16 @@ func initLog() {
 }
 
 func initMetrics() {
-	http.Handle("/metrics", promhttp.Handler())
 	go func() {
 		log.Info().Msgf("Exposing Prometheus metrics...")
-		err := http.ListenAndServe(fmt.Sprintf(":%v", viper.GetInt(constants.MetricPort)), nil)
+		http.Handle("/metrics", promhttp.Handler())
+
+		server := &http.Server{
+			Addr:              fmt.Sprintf(":%v", viper.GetInt(constants.MetricPort)),
+			ReadHeaderTimeout: 0,
+		}
+
+		err := server.ListenAndServe()
 		if err != nil {
 			log.Error().Err(err).Msgf("Cannot listen and serve Prometheus metrics")
 		}
