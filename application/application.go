@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func New() (*Application, error) {
+func New() (*Impl, error) {
 	// misc
 	db, err := databases.New()
 	if err != nil {
@@ -31,17 +31,17 @@ func New() (*Application, error) {
 		return nil, err
 	}
 
-	return &Application{
+	return &Impl{
 		twitterService: twitterService,
 		broker:         broker,
 	}, nil
 }
 
-func (app *Application) Run() error {
+func (app *Impl) Run() error {
 	return app.twitterService.DispatchNewTweets()
 }
 
-func (app *Application) Shutdown() {
+func (app *Impl) Shutdown() {
 	app.broker.Shutdown()
 	log.Info().Msgf("Application is no longer running")
 }

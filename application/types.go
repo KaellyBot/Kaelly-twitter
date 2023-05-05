@@ -5,12 +5,12 @@ import (
 	"github.com/kaellybot/kaelly-twitter/services/twitter"
 )
 
-type Interface interface {
+type Application interface {
 	Run() error
 	Shutdown()
 }
 
-type Application struct {
+type Impl struct {
 	twitterService twitter.Service
 	broker         amqp.MessageBrokerInterface
 }
