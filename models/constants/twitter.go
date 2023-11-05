@@ -1,5 +1,10 @@
 package constants
 
+const (
+	UrlClassic = "https://twitter.com"
+	UrlPreview = "https://vxtwitter.com"
+)
+
 type TwitterAccount struct {
 	Locale   string
 	Username string
