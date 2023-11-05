@@ -1,16 +1,16 @@
 package application
 
 import (
-	amqp "github.com/kaellybot/kaelly-amqp"
-	"github.com/kaellybot/kaelly-twitter/services/twitter"
+	"github.com/kaellybot/kaelly-twitter/controllers"
+	"github.com/kaellybot/kaelly-twitter/services"
 )
 
 type Application interface {
-	Run() error
+	Run()
 	Shutdown()
 }
 
 type Impl struct {
-	twitterService twitter.Service
-	broker         amqp.MessageBroker
+	controller controllers.Controller
+	service    services.Service
 }

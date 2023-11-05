@@ -3,6 +3,9 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/kaellybot/kaelly-twitter/application"
 	"github.com/kaellybot/kaelly-twitter/models/constants"
@@ -74,15 +77,13 @@ func initMetrics() {
 }
 
 func main() {
-	app, err := application.New()
-	if err != nil {
-		log.Fatal().Err(err).Msgf("Shutting down after failing to instantiate application")
-	}
+	app := application.New()
+	app.Run()
 
-	err = app.Run()
-	if err != nil {
-		log.Fatal().Err(err).Msgf("Shutting down after failing to run application")
-	}
+	sc := make(chan os.Signal, 1)
+	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
+	log.Info().Msgf("%s v%s is now running. Press CTRL-C to exit.", constants.InternalName, constants.Version)
+	<-sc
 
 	log.Info().Msgf("Gracefully shutting down %s...", constants.InternalName)
 	app.Shutdown()

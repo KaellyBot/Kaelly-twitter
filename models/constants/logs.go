@@ -7,7 +7,5 @@ const (
 	LogCorrelationID = "correlationID"
 	LogLanguage      = "language"
 	LogTwitterID     = "twitterID"
-	LogTweetID       = "tweetID"
-	LogTweetNumber   = "tweetNumber"
 	LogLevelFallback = zerolog.InfoLevel
 )
