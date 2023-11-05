@@ -20,14 +20,14 @@ const (
 	// RabbitMQ address.
 	RabbitMQAddress = "RABBITMQ_ADDRESS"
 
-	// Bearer Token used to consume the Twitter GraphQL API.
-	TwitterBearerToken = "TWITTER_BEARER_TOKEN" // #nosec G101
+	// Username used to login to Twitter.
+	TwitterUsername = "TWITTER_USERNAME"
+
+	// Password used to login to Twitter.
+	TwitterPassword = "TWITTER_PASSWORD"
 
 	// Number of tweets retrieved per call.
 	TwitterTweetCount = "TWEET_COUNT"
-
-	// Timeout to retrieve tweets in seconds.
-	TwitterTimeout = "HTTP_TIMEOUT"
 
 	// Metric port.
 	MetricPort = "METRIC_PORT"
@@ -38,31 +38,31 @@ const (
 	// Boolean; used to register commands at development guild level or globally.
 	Production = "PRODUCTION"
 
-	defaultMySQLURL           = "localhost:3306"
-	defaultMySQLUser          = ""
-	defaultMySQLPassword      = ""
-	defaultMySQLDatabase      = "kaellybot"
-	defaultRabbitMQAddress    = "amqp://localhost:5672"
-	defaultTwitterBearerToken = ""
-	defaultTwitterTweetCount  = 20
-	defaultTwitterTimeout     = 60
-	defaultMetricPort         = 2112
-	defaultLogLevel           = zerolog.InfoLevel
-	defaultProduction         = false
+	defaultMySQLURL          = "localhost:3306"
+	defaultMySQLUser         = ""
+	defaultMySQLPassword     = ""
+	defaultMySQLDatabase     = "kaellybot"
+	defaultRabbitMQAddress   = "amqp://localhost:5672"
+	defaultTwitterUsername   = ""
+	defaultTwitterPassword   = ""
+	defaultTwitterTweetCount = 20
+	defaultMetricPort        = 2112
+	defaultLogLevel          = zerolog.InfoLevel
+	defaultProduction        = false
 )
 
 func GetDefaultConfigValues() map[string]any {
 	return map[string]any{
-		MySQLURL:           defaultMySQLURL,
-		MySQLUser:          defaultMySQLUser,
-		MySQLPassword:      defaultMySQLPassword,
-		MySQLDatabase:      defaultMySQLDatabase,
-		RabbitMQAddress:    defaultRabbitMQAddress,
-		TwitterBearerToken: defaultTwitterBearerToken,
-		TwitterTweetCount:  defaultTwitterTweetCount,
-		TwitterTimeout:     defaultTwitterTimeout,
-		MetricPort:         defaultMetricPort,
-		LogLevel:           defaultLogLevel.String(),
-		Production:         defaultProduction,
+		MySQLURL:          defaultMySQLURL,
+		MySQLUser:         defaultMySQLUser,
+		MySQLPassword:     defaultMySQLPassword,
+		MySQLDatabase:     defaultMySQLDatabase,
+		RabbitMQAddress:   defaultRabbitMQAddress,
+		TwitterUsername:   defaultTwitterUsername,
+		TwitterPassword:   defaultTwitterPassword,
+		TwitterTweetCount: defaultTwitterTweetCount,
+		MetricPort:        defaultMetricPort,
+		LogLevel:          defaultLogLevel.String(),
+		Production:        defaultProduction,
 	}
 }

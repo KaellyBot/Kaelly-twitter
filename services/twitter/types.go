@@ -1,27 +1,13 @@
 package twitter
 
 import (
-	"errors"
-	"net/http"
-	"time"
-
 	amqp "github.com/kaellybot/kaelly-amqp"
 	"github.com/kaellybot/kaelly-twitter/repositories/twitteraccounts"
+	twitterscraper "github.com/n0madic/twitter-scraper"
 )
 
 const (
-	twitterURL            = "https://twitter.com"
-	twitterAPIURL         = "https://twitter.com/i/api/graphql/BeHK76TOCY3P8nO-FWocjA/UserTweets"
-	cookieGuestToken      = "gt"
-	headerGuestToken      = "x-guest-token"
-	variablesParameter    = "variables"
-	featuresParameter     = "features"
-	twitterEntryTypeTweet = "Tweet"
-	routingkey            = "news.twitter"
-)
-
-var (
-	errCookieNotFound = errors.New("cookie cannot be found")
+	routingkey = "news.twitter"
 )
 
 type Service interface {
@@ -30,14 +16,9 @@ type Service interface {
 
 type Impl struct {
 	tweetCount          int
-	token               string
+	username            string
+	password            string
 	broker              amqp.MessageBroker
-	client              http.Client
+	scraper             *twitterscraper.Scraper
 	twitterAccountsRepo twitteraccounts.Repository
-}
-
-type Tweet struct {
-	ID        string
-	URL       string
-	CreatedAt time.Time
 }

@@ -8,6 +8,7 @@ import (
 
 type TwitterAccount struct {
 	ID         string        `gorm:"unique"`
+	Name       string        `gorm:"unique"`
 	Locale     amqp.Language `gorm:"primaryKey"`
 	LastUpdate time.Time     `gorm:"not null; default:current_timestamp"`
 }
