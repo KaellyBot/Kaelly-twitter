@@ -4,6 +4,7 @@ import (
 	"sort"
 
 	"github.com/kaellybot/kaelly-twitter/models/constants"
+	"github.com/kaellybot/kaelly-twitter/webhooks"
 	twitterscraper "github.com/n0madic/twitter-scraper"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
@@ -11,10 +12,11 @@ import (
 
 func New() *Impl {
 	return &Impl{
-		tweetCount: viper.GetInt(constants.TwitterTweetCount),
-		username:   viper.GetString(constants.TwitterUsername),
-		password:   viper.GetString(constants.TwitterPassword),
-		scraper:    twitterscraper.New(),
+		tweetCount:   viper.GetInt(constants.TwitterTweetCount),
+		username:     viper.GetString(constants.TwitterUsername),
+		password:     viper.GetString(constants.TwitterPassword),
+		scraper:      twitterscraper.New(),
+		loginErrored: false,
 	}
 }
 
@@ -23,8 +25,14 @@ func (service *Impl) RetrieveTweets() (map[string][]*twitterscraper.Tweet, error
 
 	err := service.scraper.Login(service.username, service.password)
 	if err != nil {
+		if !service.loginErrored {
+			service.loginErrored = true
+			webhooks.SendWebhookMessage(":warning: Twitter login failed, manual action required!")
+		}
+
 		return nil, err
 	}
+	service.loginErrored = false
 	defer service.scraper.Logout()
 
 	result := make(map[string][]*twitterscraper.Tweet)

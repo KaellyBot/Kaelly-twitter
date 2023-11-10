@@ -14,6 +14,9 @@ const (
 	// Number of tweets retrieved per call.
 	TwitterTweetCount = "TWEET_COUNT"
 
+	// Discord webhook URL to publish errors that matter
+	DiscordWebhookUrl = "DISCORD_WEBHOOK_URL"
+
 	// Metric port.
 	MetricPort = "METRIC_PORT"
 
@@ -26,6 +29,7 @@ const (
 	defaultTwitterUsername   = ""
 	defaultTwitterPassword   = ""
 	defaultTwitterTweetCount = 20
+	defaultDiscordWebhookUrl = ""
 	defaultMetricPort        = 2112
 	defaultLogLevel          = zerolog.InfoLevel
 	defaultProduction        = false
@@ -36,6 +40,7 @@ func GetDefaultConfigValues() map[string]any {
 		TwitterUsername:   defaultTwitterUsername,
 		TwitterPassword:   defaultTwitterPassword,
 		TwitterTweetCount: defaultTwitterTweetCount,
+		DiscordWebhookUrl: defaultDiscordWebhookUrl,
 		MetricPort:        defaultMetricPort,
 		LogLevel:          defaultLogLevel.String(),
 		Production:        defaultProduction,

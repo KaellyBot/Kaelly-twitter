@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/gin-gonic/gin"
 	"github.com/kaellybot/kaelly-twitter/application"
 	"github.com/kaellybot/kaelly-twitter/models/constants"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -37,6 +38,7 @@ func initConfig() {
 }
 
 func initLog() {
+	gin.SetMode(gin.ReleaseMode)
 	zerolog.SetGlobalLevel(constants.LogLevelFallback)
 	zerolog.CallerMarshalFunc = func(pc uintptr, file string, line int) string {
 		short := file

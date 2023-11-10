@@ -9,8 +9,9 @@ type Service interface {
 }
 
 type Impl struct {
-	tweetCount int
-	username   string
-	password   string
-	scraper    *twitterscraper.Scraper
+	tweetCount   int
+	loginErrored bool
+	username     string
+	password     string
+	scraper      *twitterscraper.Scraper
 }

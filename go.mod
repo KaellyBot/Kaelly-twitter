@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/gin-gonic/gin v1.9.1
+	github.com/gtuk/discordwebhook v1.2.0
 	github.com/n0madic/twitter-scraper v0.0.0-20231104223941-296710769dd8
 	github.com/prometheus/client_golang v1.15.0
 	github.com/rs/zerolog v1.28.0
