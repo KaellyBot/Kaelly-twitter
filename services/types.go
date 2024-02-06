@@ -5,7 +5,7 @@ import (
 )
 
 type Service interface {
-	RetrieveTweets() (map[string][]*twitterscraper.Tweet, error)
+	RetrieveTweets() ([]*twitterscraper.Tweet, error)
 }
 
 type Impl struct {

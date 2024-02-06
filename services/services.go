@@ -20,7 +20,7 @@ func New() *Impl {
 	}
 }
 
-func (service *Impl) RetrieveTweets() (map[string][]*twitterscraper.Tweet, error) {
+func (service *Impl) RetrieveTweets() ([]*twitterscraper.Tweet, error) {
 	log.Info().Msgf("Retrieving tweets from Twitter...")
 
 	err := service.scraper.Login(service.username, service.password)
@@ -35,24 +35,19 @@ func (service *Impl) RetrieveTweets() (map[string][]*twitterscraper.Tweet, error
 	service.loginErrored = false
 	defer service.scraper.Logout()
 
-	result := make(map[string][]*twitterscraper.Tweet)
-	for _, account := range constants.GetTwitterAccounts() {
-		tweets, err := service.checkTwitterAccount(account)
-		if err != nil {
-			log.Error().Err(err).
-				Str(constants.LogTwitterID, account.Username).
-				Msgf("Cannot retrieve tweets from account, continuing...")
-			continue
-		}
-		result[account.Locale] = tweets
+	account := constants.GetTwitterAccount()
+	tweets, err := service.checkTwitterAccount(account)
+	if err != nil {
+		log.Error().Err(err).
+			Str(constants.LogTwitterID, account.Username).
+			Msgf("Cannot retrieve tweets from account, continuing...")
 	}
 
-	return result, nil
+	return tweets, nil
 }
 
 func (service *Impl) checkTwitterAccount(account constants.TwitterAccount) ([]*twitterscraper.Tweet, error) {
 	log.Info().
-		Str(constants.LogLanguage, account.Locale).
 		Str(constants.LogTwitterID, account.Username).
 		Msgf("Reading tweets...")
 

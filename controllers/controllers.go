@@ -30,7 +30,7 @@ func (controller *Impl) Run() {
 	}()
 }
 
-func (controller *Impl) retrieveTweets() map[string][]dtos.TweetDto {
+func (controller *Impl) retrieveTweets() []dtos.TweetDto {
 	tweets, err := controller.service.RetrieveTweets()
 	if err != nil {
 		log.Error().Err(err).
