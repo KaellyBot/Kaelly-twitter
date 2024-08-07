@@ -1,7 +1,7 @@
 package services
 
 import (
-	twitterscraper "github.com/n0madic/twitter-scraper"
+	twitterscraper "github.com/imperatrona/twitter-scraper"
 )
 
 type Service interface {

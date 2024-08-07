@@ -5,7 +5,7 @@ import (
 
 	"github.com/kaellybot/kaelly-twitter/models/constants"
 	"github.com/kaellybot/kaelly-twitter/webhooks"
-	twitterscraper "github.com/n0madic/twitter-scraper"
+	twitterscraper "github.com/imperatrona/twitter-scraper"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )

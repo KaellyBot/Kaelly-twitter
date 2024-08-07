@@ -5,13 +5,14 @@ go 1.20
 require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/gtuk/discordwebhook v1.2.0
-	github.com/n0madic/twitter-scraper v0.0.0-20231104223941-296710769dd8
+	github.com/imperatrona/twitter-scraper v0.0.11
 	github.com/prometheus/client_golang v1.15.0
 	github.com/rs/zerolog v1.28.0
 	github.com/spf13/viper v1.15.0
 )
 
 require (
+	github.com/AlexEidt/Vidio v1.5.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bytedance/sonic v1.10.2 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
@@ -48,9 +49,9 @@ require (
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
 	golang.org/x/arch v0.6.0 // indirect
-	golang.org/x/crypto v0.14.0 // indirect
-	golang.org/x/net v0.17.0 // indirect
-	golang.org/x/sys v0.14.0 // indirect
+	golang.org/x/crypto v0.21.0 // indirect
+	golang.org/x/net v0.22.0 // indirect
+	golang.org/x/sys v0.18.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
