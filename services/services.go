@@ -1,11 +1,11 @@
 package services
 
 import (
+	"net/http"
 	"sort"
 
-	"github.com/kaellybot/kaelly-twitter/models/constants"
-	"github.com/kaellybot/kaelly-twitter/webhooks"
 	twitterscraper "github.com/imperatrona/twitter-scraper"
+	"github.com/kaellybot/kaelly-twitter/models/constants"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )
@@ -15,6 +15,8 @@ func New() *Impl {
 		tweetCount:   viper.GetInt(constants.TwitterTweetCount),
 		username:     viper.GetString(constants.TwitterUsername),
 		password:     viper.GetString(constants.TwitterPassword),
+		authToken:    viper.GetString(constants.TwitterAuthToken),
+		csrfToken:    viper.GetString(constants.TwitterCSRFToken),
 		scraper:      twitterscraper.New(),
 		loginErrored: false,
 	}
@@ -22,18 +24,16 @@ func New() *Impl {
 
 func (service *Impl) RetrieveTweets() (map[string][]*twitterscraper.Tweet, error) {
 	log.Info().Msgf("Retrieving tweets from Twitter...")
-
-	err := service.scraper.Login(service.username, service.password)
-	if err != nil {
-		if !service.loginErrored {
-			service.loginErrored = true
-			webhooks.SendWebhookMessage(":warning: Twitter login failed, manual action required!")
-		}
-
-		return nil, err
-	}
-	service.loginErrored = false
-	defer service.scraper.Logout()
+	service.scraper.SetCookies([]*http.Cookie{
+		{
+			Name:  "auth_token",
+			Value: service.authToken,
+		},
+		{
+			Name:  "ct0",
+			Value: service.csrfToken,
+		},
+	})
 
 	result := make(map[string][]*twitterscraper.Tweet)
 	for _, account := range constants.GetTwitterAccounts() {

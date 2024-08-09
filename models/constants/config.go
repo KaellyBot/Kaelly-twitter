@@ -11,6 +11,12 @@ const (
 	// Password used to login to Twitter.
 	TwitterPassword = "TWITTER_PASSWORD"
 
+	// Auth token used when logged in to Twitter.
+	TwitterAuthToken = "TWITTER_AUTH_TOKEN"
+
+	// CSRF token used when logged in to Twitter.
+	TwitterCSRFToken = "TWITTER_CSRF_TOKEN"
+
 	// Number of tweets retrieved per call.
 	TwitterTweetCount = "TWEET_COUNT"
 
@@ -28,6 +34,8 @@ const (
 
 	defaultTwitterUsername   = ""
 	defaultTwitterPassword   = ""
+	defaultTwitterAuthToken  = ""
+	defaultTwitterCSRFToken  = ""
 	defaultTwitterTweetCount = 20
 	defaultDiscordWebhookUrl = ""
 	defaultMetricPort        = 2112
@@ -39,6 +47,8 @@ func GetDefaultConfigValues() map[string]any {
 	return map[string]any{
 		TwitterUsername:   defaultTwitterUsername,
 		TwitterPassword:   defaultTwitterPassword,
+		TwitterAuthToken:  defaultTwitterAuthToken,
+		TwitterCSRFToken:  defaultTwitterCSRFToken,
 		TwitterTweetCount: defaultTwitterTweetCount,
 		DiscordWebhookUrl: defaultDiscordWebhookUrl,
 		MetricPort:        defaultMetricPort,

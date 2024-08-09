@@ -13,5 +13,7 @@ type Impl struct {
 	loginErrored bool
 	username     string
 	password     string
+	authToken    string
+	csrfToken    string
 	scraper      *twitterscraper.Scraper
 }
