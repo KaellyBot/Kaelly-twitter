@@ -116,7 +116,7 @@ func (service *Impl) publishTweet(tweet *twitterscraper.Tweet, lg amqp.Language)
 		},
 	}
 
-	return service.broker.Publish(&message, amqp.ExchangeNews, routingkey, tweet.ID)
+	return service.broker.Emit(&message, amqp.ExchangeNews, routingkey, tweet.ID)
 }
 
 func (service *Impl) keepInterestingTweets(tweets []*twitterscraper.Tweet) []*twitterscraper.Tweet {
