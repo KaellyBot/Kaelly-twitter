@@ -1,6 +1,7 @@
 package twitter
 
 import (
+	"net/http"
 	"sort"
 	"sync"
 	"time"
@@ -17,9 +18,9 @@ import (
 
 func New(twitterAccountsRepo twitteraccounts.Repository, broker amqp.MessageBroker) (*Impl, error) {
 	return &Impl{
+		authToken:           viper.GetString(constants.TwitterAuthToken),
+		csrfToken:           viper.GetString(constants.TwitterCSRFToken),
 		tweetCount:          viper.GetInt(constants.TwitterTweetCount),
-		username:            viper.GetString(constants.TwitterUsername),
-		password:            viper.GetString(constants.TwitterPassword),
 		twitterAccountsRepo: twitterAccountsRepo,
 		broker:              broker,
 		scraper:             twitterscraper.New(),
@@ -34,11 +35,16 @@ func (service *Impl) DispatchNewTweets() error {
 		return err
 	}
 
-	err = service.scraper.Login(service.username, service.password)
-	if err != nil {
-		return err
-	}
-	defer service.scraper.Logout()
+	service.scraper.SetCookies([]*http.Cookie{
+		{
+			Name:  "auth_token",
+			Value: service.authToken,
+		},
+		{
+			Name:  "ct0",
+			Value: service.csrfToken,
+		},
+	})
 
 	var wg sync.WaitGroup
 	for _, account := range twitterAccounts {

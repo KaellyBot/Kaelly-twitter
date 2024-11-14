@@ -20,11 +20,11 @@ const (
 	// RabbitMQ address.
 	RabbitMQAddress = "RABBITMQ_ADDRESS"
 
-	// Username used to login to Twitter.
-	TwitterUsername = "TWITTER_USERNAME"
+	// Auth token used when logged in to Twitter.
+	TwitterAuthToken = "TWITTER_AUTH_TOKEN"
 
-	// Password used to login to Twitter.
-	TwitterPassword = "TWITTER_PASSWORD"
+	// CSRF token used when logged in to Twitter.
+	TwitterCSRFToken = "TWITTER_CSRF_TOKEN"
 
 	// Number of tweets retrieved per call.
 	TwitterTweetCount = "TWEET_COUNT"
@@ -43,8 +43,8 @@ const (
 	defaultMySQLPassword     = ""
 	defaultMySQLDatabase     = "kaellybot"
 	defaultRabbitMQAddress   = "amqp://localhost:5672"
-	defaultTwitterUsername   = ""
-	defaultTwitterPassword   = ""
+	defaultTwitterAuthToken  = ""
+	defaultTwitterCSRFToken  = ""
 	defaultTwitterTweetCount = 20
 	defaultMetricPort        = 2112
 	defaultLogLevel          = zerolog.InfoLevel
@@ -58,8 +58,8 @@ func GetDefaultConfigValues() map[string]any {
 		MySQLPassword:     defaultMySQLPassword,
 		MySQLDatabase:     defaultMySQLDatabase,
 		RabbitMQAddress:   defaultRabbitMQAddress,
-		TwitterUsername:   defaultTwitterUsername,
-		TwitterPassword:   defaultTwitterPassword,
+		TwitterAuthToken:  defaultTwitterAuthToken,
+		TwitterCSRFToken:  defaultTwitterCSRFToken,
 		TwitterTweetCount: defaultTwitterTweetCount,
 		MetricPort:        defaultMetricPort,
 		LogLevel:          defaultLogLevel.String(),

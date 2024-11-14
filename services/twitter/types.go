@@ -15,9 +15,9 @@ type Service interface {
 }
 
 type Impl struct {
+	authToken           string
+	csrfToken           string
 	tweetCount          int
-	username            string
-	password            string
 	broker              amqp.MessageBroker
 	scraper             *twitterscraper.Scraper
 	twitterAccountsRepo twitteraccounts.Repository

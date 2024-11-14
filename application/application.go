@@ -17,10 +17,7 @@ func New() (*Impl, error) {
 		return nil, err
 	}
 
-	broker, err := amqp.New(constants.RabbitMQClientID, viper.GetString(constants.RabbitMQAddress), nil)
-	if err != nil {
-		return nil, err
-	}
+	broker := amqp.New(constants.RabbitMQClientID, viper.GetString(constants.RabbitMQAddress))
 
 	// repositories
 	twitterRepo := twitteraccounts.New(db)
@@ -38,6 +35,10 @@ func New() (*Impl, error) {
 }
 
 func (app *Impl) Run() error {
+	if err := app.broker.Run(); err != nil {
+		return err
+	}
+
 	return app.twitterService.DispatchNewTweets()
 }
 
