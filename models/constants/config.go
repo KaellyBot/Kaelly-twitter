@@ -20,9 +20,11 @@ const (
 	// RabbitMQ address.
 	RabbitMQAddress = "RABBITMQ_ADDRESS"
 
+	//nolint:gosec // False positive.
 	// Auth token used when logged in to Twitter.
 	TwitterAuthToken = "TWITTER_AUTH_TOKEN"
 
+	//nolint:gosec // False positive.
 	// CSRF token used when logged in to Twitter.
 	TwitterCSRFToken = "TWITTER_CSRF_TOKEN"
 

@@ -80,7 +80,7 @@ func (service *Impl) checkTwitterAccount(account entities.TwitterAccount) {
 	for _, tweet := range tweets {
 		utcDate := time.Unix(tweet.Timestamp, 0).UTC()
 		if utcDate.After(lastUpdate.UTC()) {
-			errPublish := service.publishTweet(tweet, account.Locale)
+			errPublish := service.publishTweet(tweet, account.Game, account.Locale)
 			if errPublish != nil {
 				log.Error().Err(err).
 					Str(constants.LogCorrelationID, tweet.ID).
@@ -112,10 +112,11 @@ func (service *Impl) checkTwitterAccount(account entities.TwitterAccount) {
 		Msgf("Tweet(s) read and published")
 }
 
-func (service *Impl) publishTweet(tweet *twitterscraper.Tweet, lg amqp.Language) error {
+func (service *Impl) publishTweet(tweet *twitterscraper.Tweet, game amqp.Game, lg amqp.Language) error {
 	message := amqp.RabbitMQMessage{
 		Type:     amqp.RabbitMQMessage_NEWS_TWITTER,
 		Language: lg,
+		Game:     game,
 		NewsTwitterMessage: &amqp.NewsTwitterMessage{
 			Url:  tweet.PermanentURL,
 			Date: timestamppb.New(time.Unix(tweet.Timestamp, 0).UTC()),

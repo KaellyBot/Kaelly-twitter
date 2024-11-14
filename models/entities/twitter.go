@@ -7,8 +7,9 @@ import (
 )
 
 type TwitterAccount struct {
-	ID         string        `gorm:"unique"`
-	Name       string        `gorm:"unique"`
-	Locale     amqp.Language `gorm:"primaryKey"`
-	LastUpdate time.Time     `gorm:"not null; default:current_timestamp"`
+	ID         string `gorm:"primaryKey"`
+	Name       string
+	Game       amqp.Game
+	Locale     amqp.Language
+	LastUpdate time.Time `gorm:"not null; default:current_timestamp"`
 }
