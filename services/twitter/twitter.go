@@ -1,6 +1,7 @@
 package twitter
 
 import (
+	"fmt"
 	"net/http"
 	"sort"
 	"sync"
@@ -113,14 +114,22 @@ func (service *Impl) checkTwitterAccount(account entities.TwitterAccount) {
 }
 
 func (service *Impl) publishTweet(account entities.TwitterAccount, tweet *twitterscraper.Tweet) error {
+	tweetPhotos := make([]string, 0)
+	for _, photo := range tweet.Photos {
+		tweetPhotos = append(tweetPhotos, photo.URL)
+	}
+
 	message := amqp.RabbitMQMessage{
 		Type:     amqp.RabbitMQMessage_NEWS_TWITTER,
 		Language: account.Locale,
 		Game:     account.Game,
 		NewsTwitterMessage: &amqp.NewsTwitterMessage{
-			TwitterId: account.ID,
-			Url:       tweet.PermanentURL,
-			Date:      timestamppb.New(time.Unix(tweet.Timestamp, 0).UTC()),
+			TwitterId:   account.ID,
+			Title:       fmt.Sprintf("@%v", account.Name),
+			Description: tweet.Text,
+			Url:         tweet.PermanentURL,
+			IconUrls:    tweetPhotos,
+			Date:        timestamppb.New(time.Unix(tweet.Timestamp, 0).UTC()),
 		},
 	}
 

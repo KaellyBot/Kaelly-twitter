@@ -2,10 +2,10 @@ module github.com/kaellybot/kaelly-twitter
 
 go 1.22
 
-// replace github.com/kaellybot/kaelly-amqp => /home/kaysoro/git/kaelly-amqp
+// replace github.com/kaellybot/kaelly-amqp => ../kaelly-amqp
 
 require (
-	github.com/kaellybot/kaelly-amqp v0.0.9-beta6
+	github.com/kaellybot/kaelly-amqp v0.0.9-beta13
 	github.com/n0madic/twitter-scraper v0.0.0-20231104223941-296710769dd8
 	github.com/rs/zerolog v1.33.0
 	github.com/spf13/viper v1.19.0
